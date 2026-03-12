@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ADMIN — SORTEO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent: #dd0c19;
+    --error:  #C0392B;
+    --fh: 'Barlow Condensed', sans-serif;
+    --fb: 'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: #F2F0EB;
+    color: #1a1a1a;
+    font-family: var(--fb);
+    font-size: 0.9rem;
+    min-height: 100vh;
+  }
+
+  /* ── LOGIN ────────────────────────────────────── */
+
+  #login-screen {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+    background: #1a1a1a;
+  }
+
+  #login-form {
+    width: 100%; max-width: 300px;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
+
+  .login-brand {
+    font-family: var(--fh);
+    font-size: 1.1rem; letter-spacing: 0.2em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-input {
+    display: block; width: 100%;
+    background: transparent; border: none;
+    border-bottom: 1px solid #444;
+    color: #F0EDE6; outline: none;
+    font-family: var(--fh); font-weight: 700;
+    font-size: 1.1rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.5rem 0; transition: border-color 0.2s;
+  }
+
+  .login-input:focus        { border-bottom-color: var(--accent); }
+  .login-input::placeholder { color: #555; }
+
+  .login-btn {
+    width: 100%; background: var(--accent); color: #fff; border: none;
+    padding: 0.875rem; font-family: var(--fh); font-weight: 700;
+    font-size: 1.2rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: filter 0.1s;
+  }
+
+  .login-btn:hover    { filter: brightness(1.1); }
+  .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .login-error {
+    font-size: 0.82rem; color: #e55; text-align: center;
+    font-family: var(--fh); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  /* ── DASHBOARD ────────────────────────────────── */
+
+  #dashboard { min-height: 100vh; }
+
+  .dash-header {
+    position: sticky; top: 0; z-index: 10;
+    background: #fff; border-bottom: 1px solid #E2DED8;
+    padding: 0.875rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .dash-brand {
+    font-family: var(--fh); font-size: 1.2rem;
+    letter-spacing: 0.2em; color: var(--accent);
+  }
+
+  .dash-meta { font-size: 0.72rem; color: #aaa; }
+
+  .dash-container {
+    max-width: 860px; margin: 0 auto; padding: 0 2rem 4rem;
+  }
+
+  /* ── Sections ─────────────────────────────────── */
+
+  .admin-section {
+    background: #fff; border: 1px solid #E2DED8;
+    border-radius: 2px; padding: 1.75rem; margin-top: 1.5rem;
+  }
+
+  .section-title {
+    font-family: var(--fh); font-size: 1.1rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #1a1a1a; margin-bottom: 0.2rem;
+  }
+
+  .section-sub {
+    font-size: 0.75rem; color: #aaa; margin-bottom: 1.25rem;
+  }
+
+  /* ── Forms ────────────────────────────────────── */
+
+  .admin-form {
+    display: flex; flex-direction: column; gap: 1rem; max-width: 520px;
+  }
+
+  .form-label {
+    display: block; font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.04em; color: #666; text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .admin-input {
+    display: block; width: 100%;
+    background: #FAFAF8; border: 1px solid #DDD8D2;
+    color: #1a1a1a; outline: none;
+    font-family: var(--fb); font-size: 0.9rem;
+    padding: 0.6rem 0.75rem; border-radius: 2px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .admin-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(184,92,42,0.1);
+    background: #fff;
+  }
+
+  .admin-input::placeholder { color: #bbb; }
+
+  .admin-btn {
+    align-self: flex-start;
+    background: var(--accent); color: #fff; border: none;
+    padding: 0.6rem 1.5rem; font-family: var(--fb);
+    font-weight: 500; font-size: 0.88rem;
+    cursor: pointer; border-radius: 2px;
+    transition: filter 0.1s, transform 0.1s;
+  }
+
+  .admin-btn:hover    { filter: brightness(1.08); }
+  .admin-btn:active   { transform: scale(0.98); }
+  .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .admin-btn.secondary {
+    background: #f0ede8; color: #555;
+    border: 1px solid #DDD8D2;
+  }
+
+  .admin-btn.secondary:hover { background: #e8e5e0; }
+
+  .admin-btn.danger { background: #c0392b; }
+
+  .form-error {
+    font-size: 0.8rem; color: var(--error);
+  }
+
+  .form-success {
+    font-size: 0.8rem; color: #27ae60;
+  }
+
+  /* ── Premios config ───────────────────────────── */
+
+  #premios-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+  .premio-row {
+    display: flex; gap: 0.5rem; align-items: center;
+  }
+
+  .premio-row .admin-input { flex: 1; }
+  .premio-row .input-cant  { width: 80px; flex: none; }
+
+  .remove-premio-btn {
+    background: none; border: none; color: #aaa;
+    font-size: 1.1rem; cursor: pointer; padding: 0 0.25rem;
+    line-height: 1; transition: color 0.15s;
+  }
+
+  .remove-premio-btn:hover { color: var(--error); }
+
+  /* ── Table ────────────────────────────────────── */
+
+  .count-badge { font-size: 0.82rem; color: var(--accent); font-weight: 500; margin-bottom: 1rem; }
+
+  .admin-table {
+    width: 100%; border-collapse: collapse; font-size: 0.83rem;
+  }
+
+  .admin-table th {
+    text-align: left; padding: 0.5rem 0.75rem;
+    font-size: 0.72rem; font-weight: 500; letter-spacing: 0.04em;
+    text-transform: uppercase; color: #999;
+    border-bottom: 2px solid #E2DED8;
+  }
+
+  .admin-table td {
+    padding: 0.6rem 0.75rem; border-bottom: 1px solid #F0EDE8; color: #666;
+  }
+
+  .admin-table td.cell-main  { color: #1a1a1a; font-weight: 500; }
+  .admin-table td.cell-win   { color: var(--accent); font-weight: 500; }
+
+  .state-msg { font-size: 0.85rem; color: #aaa; padding: 0.5rem 0; }
+
+  /* ── Sortear btn ──────────────────────────────── */
+
+  .sortear-btn {
+    background: #1a1a1a; color: #fff; border: none;
+    padding: 0.875rem 2.5rem; font-family: var(--fh); font-weight: 700;
+    font-size: 1.3rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px;
+    transition: filter 0.1s, transform 0.1s;
+  }
+
+  .sortear-btn:hover    { filter: brightness(1.2); }
+  .sortear-btn:active   { transform: scale(0.98); }
+  .sortear-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Results overlay ──────────────────────────── */
+
+  #results-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+
+  .results-box {
+    background: #fff; border-radius: 2px;
+    max-width: 540px; width: 100%;
+    max-height: 80vh; overflow-y: auto;
+    padding: 2rem;
+    display: flex; flex-direction: column; gap: 1.25rem;
+  }
+
+  .results-title {
+    font-family: var(--fh); font-size: 1.4rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #1a1a1a; border-bottom: 2px solid #E2DED8; padding-bottom: 0.75rem;
+  }
+
+  .results-premio-block { margin-bottom: 0.25rem; }
+
+  .results-premio-name {
+    font-family: var(--fh); font-size: 1rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #666; margin-bottom: 0.35rem;
+  }
+
+  .results-winner {
+    font-size: 0.88rem; color: #1a1a1a; padding: 0.4rem 0;
+    border-bottom: 1px solid #F0EDE8;
+  }
+
+  .results-winner .ig { color: var(--accent); font-weight: 500; }
+
+  .results-actions {
+    display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;
+  }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    .dash-header    { padding: 0.75rem 1rem; }
+    .dash-container { padding: 0 1rem 3rem; }
+    .premio-row     { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ────────────────────────────────────── -->
+<div id="login-screen">
+  <form id="login-form" novalidate>
+    <p class="login-brand">ADMIN</p>
+    <div>
+      <input class="login-input" type="email" id="a-email" placeholder="EMAIL" autocomplete="off"/>
+    </div>
+    <div>
+      <input class="login-input" type="password" id="a-password" placeholder="CONTRASEÑA"/>
+    </div>
+    <p id="login-error" class="login-error" hidden></p>
+    <button class="login-btn" type="submit" id="login-btn">ACCEDER</button>
+  </form>
+</div>
+
+<!-- ── DASHBOARD ─────────────────────────────────── -->
+<div id="dashboard" hidden>
+
+  <header class="dash-header">
+    <span class="dash-brand">SORTEO</span>
+    <span class="dash-meta" id="refresh-label">ADMIN</span>
+  </header>
+
+  <div class="dash-container">
+
+    <!-- CLAVE DE ACCESO -->
+    <section class="admin-section">
+      <h2 class="section-title">CLAVE DE ACCESO</h2>
+      <p class="section-sub">La que subes a historias para entrar a la web</p>
+      <form class="admin-form" id="config-form" novalidate>
+        <div>
+          <label class="form-label">Clave actual</label>
+          <p id="current-access-password" style="font-weight:500;color:var(--accent);font-size:1rem">—</p>
+        </div>
+        <div>
+          <label class="form-label" for="new-access-password">Nueva clave</label>
+          <input class="admin-input" type="text" id="new-access-password" placeholder="Nueva contraseña"/>
+        </div>
+        <p id="config-msg" hidden></p>
+        <button type="submit" class="admin-btn">GUARDAR CLAVE</button>
+      </form>
+    </section>
+
+    <!-- SORTEO ACTIVO -->
+    <section class="admin-section">
+      <h2 class="section-title">SORTEO ACTIVO</h2>
+      <p class="section-sub">Configura el sorteo que ven los participantes</p>
+      <form class="admin-form" id="sorteo-config-form" novalidate>
+        <div>
+          <label class="form-label" for="s-titulo">Título del sorteo</label>
+          <input class="admin-input" type="text" id="s-titulo" placeholder="Ej: Sudadera Camo"/>
+        </div>
+        <div>
+          <label class="form-label" for="s-fecha-fin">Fecha fin</label>
+          <input class="admin-input" type="datetime-local" id="s-fecha-fin"/>
+        </div>
+        <div>
+          <label class="form-label" for="s-imagen">Imagen del sorteo</label>
+          <input class="admin-input" type="file" id="s-imagen" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:0.4rem 0.5rem"/>
+          <div id="s-imagen-preview" style="margin-top:0.5rem;display:none">
+            <img id="s-imagen-img" src="" alt="" style="max-height:120px;border-radius:2px;border:1px solid #DDD8D2"/>
+            <button type="button" id="s-imagen-clear" class="admin-btn secondary" style="margin-top:0.4rem;font-size:0.75rem;padding:0.3rem 0.75rem">Eliminar imagen</button>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Premios</label>
+          <div id="premios-list"></div>
+          <button type="button" class="admin-btn secondary" id="add-premio-btn" style="margin-top:0.25rem">+ Añadir premio</button>
+        </div>
+        <p id="sorteo-config-msg" hidden></p>
+        <button type="submit" class="admin-btn">GUARDAR SORTEO</button>
+      </form>
+    </section>
+
+    <!-- PARTICIPANTES -->
+    <section class="admin-section">
+      <h2 class="section-title">PARTICIPANTES</h2>
+      <p class="count-badge" id="part-count"></p>
+      <div id="part-container"><p class="state-msg">Cargando...</p></div>
+    </section>
+
+    <!-- HACER SORTEO -->
+    <section class="admin-section">
+      <h2 class="section-title">HACER SORTEO</h2>
+      <p class="section-sub">Elige ganadores aleatorios y cierra el sorteo</p>
+      <p id="sorteo-error" class="form-error" hidden></p>
+      <button class="sortear-btn" id="sortear-btn">SORTEAR</button>
+    </section>
+
+    <!-- PARTICIPANTES ANTERIORES -->
+    <section class="admin-section">
+      <h2 class="section-title">PARTICIPANTES ANTERIORES</h2>
+      <div id="ant-container"><p class="state-msg">Cargando...</p></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ── RESULTS OVERLAY ───────────────────────────── -->
+<div id="results-overlay" hidden>
+  <div class="results-box">
+    <p class="results-title" id="results-sorteo-name"></p>
+    <div id="results-body"></div>
+    <div class="results-actions">
+      <button class="admin-btn" id="confirm-sorteo-btn">CONFIRMAR Y CERRAR SORTEO</button>
+      <button class="admin-btn secondary" id="cancel-sorteo-btn">CANCELAR</button>
+    </div>
+    <p id="confirm-error" class="form-error" hidden></p>
+  </div>
+</div>
+
+<script>
+  /* ── State ──────────────────────────────────────── */
+  let adminToken      = null;
+  let configRecordId  = null;
+  let sorteoConfigId  = null;
+  let refreshInterval = null;
+  let lastResults     = null;   // {premio, winners[]}[]
+  let lastParticipants = [];
+
+  /* ── Login ──────────────────────────────────────── */
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('a-email').value.trim();
+    const password = document.getElementById('a-password').value;
+    const errEl    = document.getElementById('login-error');
+    const btn      = document.getElementById('login-btn');
+    errEl.hidden   = true;
+    btn.disabled   = true; btn.textContent = '...';
+
+    try {
+      const res = await fetch('/api/collections/users/auth-with-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ identity: email, password })
+      });
+      if (!res.ok) throw new Error('credentials');
+      const data = await res.json();
+      if (!data.record?.is_admin) throw new Error('not_admin');
+      adminToken = data.token;
+      document.getElementById('login-screen').hidden = true;
+      document.getElementById('dashboard').hidden    = false;
+      document.body.style.background = '#F2F0EB';
+      loadAll();
+      refreshInterval = setInterval(() => loadAll().catch(() => {}), 30000);
+    } catch (err) {
+      errEl.textContent = err.message === 'not_admin' ? 'No tienes permisos de admin.' : 'Credenciales incorrectas.';
+      errEl.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'ACCEDER';
+    }
+  });
+
+  /* ── API helper ─────────────────────────────────── */
+  async function api(url, opts = {}) {
+    const res = await fetch(url, {
+      ...opts,
+      headers: { ...opts.headers, 'Authorization': adminToken }
+    });
+    if (res.status === 401) { location.reload(); }
+    return res;
+  }
+
+  async function loadAll() {
+    await Promise.all([loadConfig(), loadSorteoConfig(), loadParticipantes(), loadAnteriores()]);
+    const now = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('refresh-label').textContent = `Actualizado: ${now}`;
+  }
+
+  /* ── Clave de acceso ────────────────────────────── */
+  async function loadConfig() {
+    try {
+      const res  = await api('/api/collections/config/records?perPage=1');
+      const data = await res.json();
+      const rec  = data.items?.[0];
+      if (rec) {
+        configRecordId = rec.id;
+        document.getElementById('current-access-password').textContent = rec.access_password;
+        document.getElementById('new-access-password').value = rec.access_password;
+      }
+    } catch {}
+  }
+
+  document.getElementById('config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const val = document.getElementById('new-access-password').value.trim();
+    const msg = document.getElementById('config-msg');
+    msg.hidden = true;
+    if (!val) return;
+
+    const btn = e.target.querySelector('.admin-btn');
+    btn.disabled = true;
+
+    try {
+      const url    = configRecordId ? `/api/collections/config/records/${configRecordId}` : '/api/collections/config/records';
+      const method = configRecordId ? 'PATCH' : 'POST';
+      const res    = await api(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_password: val }) });
+      if (!res.ok) throw new Error();
+      const rec = await res.json();
+      configRecordId = rec.id;
+      document.getElementById('current-access-password').textContent = rec.access_password;
+      showMsg(msg, '✓ Guardado', 'success');
+    } catch {
+      showMsg(msg, 'Error al guardar.', 'error');
+    } finally { btn.disabled = false; }
+  });
+
+  /* ── Sorteo config ──────────────────────────────── */
+  let premios = []; // [{nombre, cantidad}]
+
+  async function loadSorteoConfig() {
+    try {
+      const res  = await api('/api/collections/sorteo_config/records?perPage=1');
+      const data = await res.json();
+      const rec  = data.items?.[0];
+      if (rec) {
+        sorteoConfigId = rec.id;
+        document.getElementById('s-titulo').value = rec.titulo || '';
+        // fecha_fin: stored as ISO, input needs YYYY-MM-DDTHH:MM
+        if (rec.fecha_fin) {
+          document.getElementById('s-fecha-fin').value = rec.fecha_fin.slice(0, 16);
+        }
+        premios = rec.premios ? JSON.parse(rec.premios) : [];
+        // imagen preview
+        if (rec.imagen) {
+          const url = `/api/files/sorteo_config/${rec.id}/${rec.imagen}`;
+          showImagePreview(url);
+        }
+      }
+    } catch {
+      premios = [];
+    }
+    renderPremios();
+  }
+
+  function showImagePreview(url) {
+    document.getElementById('s-imagen-img').src = url;
+    document.getElementById('s-imagen-preview').style.display = 'block';
+  }
+
+  document.getElementById('s-imagen-clear').addEventListener('click', () => {
+    document.getElementById('s-imagen').value = '';
+    document.getElementById('s-imagen-preview').style.display = 'none';
+    document.getElementById('s-imagen-img').src = '';
+  });
+
+  function renderPremios() {
+    const list = document.getElementById('premios-list');
+    list.innerHTML = '';
+    premios.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'premio-row';
+      row.innerHTML = `
+        <input class="admin-input" type="text" placeholder="Nombre del premio" value="${esc(p.nombre)}" data-i="${i}" data-field="nombre"/>
+        <input class="admin-input input-cant" type="number" min="1" placeholder="Und." value="${p.cantidad}" data-i="${i}" data-field="cantidad"/>
+        <button type="button" class="remove-premio-btn" data-i="${i}" title="Eliminar">×</button>`;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('input').forEach(inp => inp.addEventListener('input', (e) => {
+      const i = +e.target.dataset.i;
+      const f = e.target.dataset.field;
+      premios[i][f] = f === 'cantidad' ? Math.max(1, parseInt(e.target.value) || 1) : e.target.value;
+    }));
+
+    list.querySelectorAll('.remove-premio-btn').forEach(btn => btn.addEventListener('click', (e) => {
+      premios.splice(+e.target.dataset.i, 1);
+      renderPremios();
+    }));
+  }
+
+  document.getElementById('add-premio-btn').addEventListener('click', () => {
+    premios.push({ nombre: '', cantidad: 1 });
+    renderPremios();
+    document.getElementById('premios-list').lastElementChild?.querySelector('input')?.focus();
+  });
+
+  document.getElementById('sorteo-config-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const titulo   = document.getElementById('s-titulo').value.trim();
+    const fechaFin = document.getElementById('s-fecha-fin').value;
+    const imgFile  = document.getElementById('s-imagen').files[0];
+    const msg      = document.getElementById('sorteo-config-msg');
+    msg.hidden     = true;
+    if (!titulo) { showMsg(msg, 'El título es obligatorio.', 'error'); return; }
+
+    const btn = e.target.querySelector('.admin-btn[type="submit"]');
+    btn.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append('titulo',   titulo);
+      fd.append('premios',  JSON.stringify(premios));
+      fd.append('activo',   'true');
+      if (fechaFin) fd.append('fecha_fin', fechaFin);
+      if (imgFile)  fd.append('imagen', imgFile);
+
+      const url    = sorteoConfigId ? `/api/collections/sorteo_config/records/${sorteoConfigId}` : '/api/collections/sorteo_config/records';
+      const method = sorteoConfigId ? 'PATCH' : 'POST';
+      // Don't set Content-Type — browser sets multipart boundary automatically
+      const res    = await api(url, { method, body: fd });
+      if (!res.ok) throw new Error();
+      const rec    = await res.json();
+      sorteoConfigId = rec.id;
+      if (rec.imagen) showImagePreview(`/api/files/sorteo_config/${rec.id}/${rec.imagen}`);
+      showMsg(msg, '✓ Sorteo guardado', 'success');
+    } catch {
+      showMsg(msg, 'Error al guardar.', 'error');
+    } finally { btn.disabled = false; }
+  });
+
+  /* ── Participantes ──────────────────────────────── */
+  async function loadParticipantes() {
+    const container = document.getElementById('part-container');
+    const countEl   = document.getElementById('part-count');
+    try {
+      const res   = await api('/api/collections/participantes/records?sort=created&perPage=500');
+      const data  = await res.json();
+      lastParticipants = data.items || [];
+      countEl.textContent = `${data.totalItems || lastParticipants.length} participantes`;
+      renderParticipantes(lastParticipants, container);
+    } catch {
+      container.innerHTML = '<p class="state-msg">Error al cargar.</p>';
+    }
+  }
+
+  function renderParticipantes(list, container) {
+    if (list.length === 0) {
+      container.innerHTML = '<p class="state-msg">No hay participantes todavía.</p>';
+      return;
+    }
+    const rows = list.map(p => `
+      <tr>
+        <td class="cell-main">${esc(p.email)}</td>
+        <td class="cell-win">${esc(p.instagram)}</td>
+        <td>${formatDate(p.created)}</td>
+      </tr>`).join('');
+    container.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Email</th><th>Instagram</th><th>Registro</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  /* ── Hacer sorteo ───────────────────────────────── */
+  document.getElementById('sortear-btn').addEventListener('click', async () => {
+    const errEl = document.getElementById('sorteo-error');
+    errEl.hidden = true;
+
+    if (lastParticipants.length === 0) {
+      errEl.textContent = 'No hay participantes para sortear.';
+      errEl.hidden = false;
+      return;
+    }
+
+    if (!sorteoConfigId || premios.length === 0) {
+      errEl.textContent = 'Configura el sorteo y los premios primero.';
+      errEl.hidden = false;
+      return;
+    }
+
+    const pool    = [...lastParticipants];
+    const results = [];
+
+    for (const { nombre, cantidad } of premios) {
+      const winners = [];
+      const n       = Math.min(cantidad, pool.length);
+      for (let i = 0; i < n; i++) {
+        const idx = Math.floor(Math.random() * pool.length);
+        winners.push(pool.splice(idx, 1)[0]);
+      }
+      results.push({ premio: nombre, winners });
+    }
+
+    lastResults = results;
+    showResultsOverlay(results);
+  });
+
+  function showResultsOverlay(results) {
+    const titulo = document.getElementById('s-titulo').value || 'SORTEO';
+    document.getElementById('results-sorteo-name').textContent = titulo.toUpperCase();
+
+    const body = results.map(({ premio, winners }) => {
+      if (winners.length === 0) return '';
+      const rows = winners.map(w =>
+        `<p class="results-winner">${esc(w.email)} — <span class="ig">${esc(w.instagram)}</span></p>`
+      ).join('');
+      return `<div class="results-premio-block">
+        <p class="results-premio-name">${esc(premio)}</p>
+        ${rows}
+      </div>`;
+    }).join('');
+
+    document.getElementById('results-body').innerHTML = body;
+    document.getElementById('confirm-error').hidden  = true;
+    document.getElementById('results-overlay').hidden = false;
+  }
+
+  document.getElementById('cancel-sorteo-btn').addEventListener('click', () => {
+    document.getElementById('results-overlay').hidden = true;
+    lastResults = null;
+  });
+
+  document.getElementById('confirm-sorteo-btn').addEventListener('click', async () => {
+    const btn     = document.getElementById('confirm-sorteo-btn');
+    const errEl   = document.getElementById('confirm-error');
+    errEl.hidden  = true;
+    btn.disabled  = true; btn.textContent = 'Guardando...';
+
+    const titulo = document.getElementById('s-titulo').value || 'Sorteo';
+
+    // Build winner map: id → premio
+    const winnerMap = {};
+    for (const { premio, winners } of lastResults) {
+      for (const w of winners) winnerMap[w.id] = premio;
+    }
+
+    try {
+      // 1. Save all to participantes_anteriores
+      await Promise.all(lastParticipants.map(p =>
+        api('/api/collections/participantes_anteriores/records', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            email:         p.email,
+            instagram:     p.instagram,
+            sorteo_titulo: titulo,
+            ganador:       p.id in winnerMap,
+            premio:        winnerMap[p.id] || ''
+          })
+        })
+      ));
+
+      // 2. Delete all participantes
+      await Promise.all(lastParticipants.map(p =>
+        api(`/api/collections/participantes/records/${p.id}`, { method: 'DELETE' })
+      ));
+
+      document.getElementById('results-overlay').hidden = true;
+      lastResults = null;
+      await loadAll();
+    } catch {
+      errEl.textContent = 'Error al guardar. Inténtalo de nuevo.';
+      errEl.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'CONFIRMAR Y CERRAR SORTEO';
+    }
+  });
+
+  /* ── Participantes anteriores ───────────────────── */
+  async function loadAnteriores() {
+    const container = document.getElementById('ant-container');
+    try {
+      const res  = await api('/api/collections/participantes_anteriores/records?sort=-created&perPage=300');
+      const data = await res.json();
+      renderAnteriores(data.items || [], container);
+    } catch {
+      container.innerHTML = '<p class="state-msg">Error al cargar.</p>';
+    }
+  }
+
+  function renderAnteriores(list, container) {
+    if (list.length === 0) {
+      container.innerHTML = '<p class="state-msg">Aún no hay sorteos cerrados.</p>';
+      return;
+    }
+    const rows = list.map(p => `
+      <tr>
+        <td class="cell-main">${esc(p.email)}</td>
+        <td>${esc(p.instagram)}</td>
+        <td>${esc(p.sorteo_titulo)}</td>
+        <td ${p.ganador ? 'class="cell-win"' : ''}>${p.ganador ? `✓ ${esc(p.premio)}` : '—'}</td>
+        <td>${formatDate(p.created)}</td>
+      </tr>`).join('');
+    container.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Email</th><th>Instagram</th><th>Sorteo</th><th>Premio</th><th>Fecha</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  /* ── Helpers ─────────────────────────────────────── */
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className   = type === 'error' ? 'form-error' : 'form-success';
+    el.hidden      = false;
+    setTimeout(() => { el.hidden = true; }, 3000);
+  }
+</script>
+</body>
+</html>

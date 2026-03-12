@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SORTEO</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          primary:  '#dd0c19',
+          bg:       '#0d0f0d',
+          surface:  '#161816',
+          border:   '#2a2a2a',
+        },
+        fontFamily: {
+          display: ['Barlow Condensed', 'sans-serif'],
+          body:    ['Plus Jakarta Sans', 'sans-serif'],
+        },
+      },
+    },
+  }
+</script>
+<style>
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  #bg-canvas {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 1;
+  }
+
+  .shake { animation: shake-anim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes shake-anim {
+    10%,90%     { transform: translate3d(-1px,0,0); }
+    20%,80%     { transform: translate3d(2px,0,0); }
+    30%,50%,70% { transform: translate3d(-4px,0,0); }
+    40%,60%     { transform: translate3d(4px,0,0); }
+  }
+
+  @keyframes confirm-blink {
+    0%, 100% { color: #F0EDE6; }
+    50%       { color: #ff4d58; }
+  }
+
+  .success-static { animation: static-burst 0.4s ease-out forwards; }
+  @keyframes static-burst {
+    0%   { opacity:1; filter:blur(0); }
+    20%  { opacity:0.5; filter:blur(4px) contrast(200%); }
+    100% { opacity:0; filter:blur(0); }
+  }
+
+  #gate-input::placeholder { color: #dd0c19; opacity: 1; font-size: 2rem; letter-spacing: 0.5em; }
+  #reg-email::placeholder, #reg-email-confirm::placeholder, #reg-instagram::placeholder { color: #ffffff; opacity: 1; }
+
+  #salchicha-transition {
+    position: fixed; inset: 0; z-index: 100;
+    pointer-events: none; overflow: hidden;
+  }
+
+  #salchicha-transition img {
+    position: absolute;
+    will-change: transform;
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="bg-bg text-slate-100 antialiased min-h-screen">
+
+<!-- Salchicha transition -->
+<div id="salchicha-transition"></div>
+
+<!-- Background stripes canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- ── GATE ────────────────────────────────────────── -->
+<div id="gate-screen" class="fixed inset-0 flex items-center justify-center z-30 px-6">
+  <form id="gate-form" class="w-full max-w-xs flex flex-col gap-6 rounded-2xl px-8 py-10" style="background:rgba(255,255,255,0.08);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.2);" novalidate>
+    <h1 class="font-display text-4xl tracking-[0.2em] text-center text-slate-100 uppercase">BIENVENIDO</h1>
+    <div>
+      <input id="gate-input" type="text" placeholder="***" onfocus="this.placeholder=''" onblur="if(!this.value)this.placeholder='***'"
+        class="w-full bg-transparent border-0 border-b-2 border-slate-100 text-slate-100
+               font-display font-bold text-xl tracking-widest uppercase
+               outline-none py-2 text-center
+               focus:border-primary transition-colors"
+        style="caret-color:#dd0c19"/>
+    </div>
+    <p id="gate-error" class="text-red-500 text-sm tracking-widest uppercase text-center" hidden></p>
+    <button type="submit"
+      class="w-full bg-primary text-white font-display font-bold text-2xl tracking-widest uppercase
+             py-4 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50">
+      ENTRAR
+    </button>
+    <button type="button" id="gate-admin-btn"
+      class="self-center text-xl text-bg opacity-15 hover:opacity-50 transition-opacity -mt-2 px-1">·</button>
+  </form>
+</div>
+
+<!-- ── SORTEO ───────────────────────────────────────── -->
+<div id="sorteo-screen" hidden class="relative z-20 flex min-h-screen flex-col items-center justify-center">
+  <!-- No hay sorteo activo -->
+  <div id="sorteo-inactivo" hidden class="flex flex-1 items-center justify-center px-6">
+    <p class="font-display text-2xl tracking-[0.2em] text-slate-600 uppercase">NO HAY SORTEO ACTIVO.</p>
+  </div>
+
+  <!-- Sorteo cerrado -->
+  <div id="sorteo-cerrado" hidden class="flex flex-1 items-center justify-center px-6">
+    <p class="font-display text-2xl tracking-[0.2em] text-slate-500 uppercase">SORTEO CERRADO.</p>
+  </div>
+
+  <!-- Sorteo activo -->
+  <div id="sorteo-activo" hidden class="w-full max-w-[640px] px-6 py-10 md:py-14 flex flex-col gap-10">
+
+    <!-- Product image -->
+    <div id="sorteo-imagen-wrap" hidden class="relative group">
+      <div class="aspect-square w-full overflow-hidden rounded-xl bg-surface shadow-xl ring-1 ring-border">
+        <img id="sorteo-imagen" src="" alt="" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+      </div>
+      <div class="absolute -bottom-4 -right-4 -z-10 size-32 rounded-full bg-primary/10 blur-2xl"></div>
+    </div>
+
+    <!-- Form card -->
+    <section class="rounded-2xl p-8 flex flex-col gap-6" style="background:rgba(255,255,255,0.08);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <h1 id="sorteo-titulo-text" class="font-display text-4xl md:text-5xl font-bold tracking-tight text-slate-100 uppercase leading-none text-center"></h1>
+      <form id="registro-form" class="flex flex-col gap-5" novalidate>
+        <div>
+          <input id="reg-email" type="email" placeholder="CORREO"
+            class="w-full bg-transparent border-0 border-b-2 border-slate-100 text-slate-100
+                   font-display font-bold text-xl tracking-widest uppercase
+                   placeholder-slate-600 outline-none py-2 text-center
+                   focus:border-primary transition-colors"
+            style="caret-color:#dd0c19"/>
+        </div>
+        <div>
+          <input id="reg-email-confirm" type="email" placeholder="REPITE CORREO"
+            class="w-full bg-transparent border-0 border-b-2 border-slate-100 text-slate-100
+                   font-display font-bold text-xl tracking-widest uppercase
+                   placeholder-slate-600 outline-none py-2 text-center
+                   focus:border-primary transition-colors"
+            style="caret-color:#dd0c19"
+            autocomplete="off" autocorrect="off" autocapitalize="off"/>
+        </div>
+        <div>
+          <input id="reg-instagram" type="text" placeholder="INSTAGRAM"
+            class="w-full bg-transparent border-0 border-b-2 border-slate-100 text-slate-100
+                   font-display font-bold text-xl tracking-widest uppercase
+                   placeholder-slate-600 outline-none py-2 text-center
+                   focus:border-primary transition-colors"
+            style="caret-color:#dd0c19"
+            autocomplete="off" autocorrect="off" autocapitalize="off"/>
+        </div>
+        <p id="reg-error" class="text-red-500 text-sm tracking-wide text-center" hidden></p>
+        <button id="reg-btn" type="submit"
+          class="mt-1 w-full bg-primary hover:brightness-110 active:scale-[0.98]
+                 text-white font-bold py-4 rounded-lg shadow-lg shadow-primary/20
+                 transition-all disabled:opacity-50 tracking-wide">
+          Quiero participar
+        </button>
+      </form>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center">
+      <p id="sorteo-fecha-fin" class="text-sm text-slate-500 leading-relaxed" hidden>
+        Sorteo válido hasta el <span id="sorteo-fecha-fin-text" class="font-bold text-slate-300"></span>
+      </p>
+    </footer>
+  </div>
+</div>
+
+<!-- ── CONFIRMATION ─────────────────────────────────── -->
+<div id="confirm-screen" hidden class="fixed inset-0 flex items-center justify-center z-30 px-6">
+  <div class="text-center flex flex-col gap-4 animate-[fadeIn_0.8s_ease-out]" style="animation:confirm-blink 1.5s steps(1) infinite">
+    <p class="font-display text-6xl md:text-8xl font-bold tracking-widest uppercase leading-none">
+      TE HAS<br>APUNTADO.
+    </p>
+    <p class="text-sm tracking-[0.3em] uppercase">Suerte.</p>
+  </div>
+</div>
+
+<script>
+  let accessPassword = null;
+
+  async function init() {
+    const [cfgRes, sorteoRes] = await Promise.allSettled([
+      fetch('/api/collections/config/records?perPage=1'),
+      fetch('/api/collections/sorteo_config/records?perPage=1')
+    ]);
+
+    if (cfgRes.status === 'fulfilled' && cfgRes.value.ok) {
+      const d = await cfgRes.value.json();
+      if (d.items?.[0]) accessPassword = d.items[0].access_password;
+    }
+
+    if (sorteoRes.status === 'fulfilled' && sorteoRes.value.ok) {
+      const d = await sorteoRes.value.json();
+      window._sorteoConfig = d.items?.[0] || null;
+    }
+  }
+
+  init();
+
+  /* ── Gate ─────────────────────────────────────────── */
+  document.getElementById('gate-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('gate-input').value.trim();
+    const errEl = document.getElementById('gate-error');
+    errEl.hidden = true;
+
+    if (accessPassword !== null && input.toUpperCase() !== accessPassword.toUpperCase()) {
+      errEl.textContent = 'CONTRASEÑA INCORRECTA.';
+      errEl.hidden = false;
+      triggerShake(document.getElementById('gate-form'));
+      return;
+    }
+
+    transitionTo('gate-screen', showSorteoScreen);
+  });
+
+  document.getElementById('gate-admin-btn').addEventListener('click', () => {
+    window.location.href = '/admin';
+  });
+
+  /* ── Sorteo screen ─────────────────────────────────── */
+  function showSorteoScreen() {
+    const cfg = window._sorteoConfig;
+    document.getElementById('sorteo-screen').hidden = false;
+
+    if (!cfg || !cfg.titulo) {
+      document.getElementById('sorteo-inactivo').hidden = false;
+      return;
+    }
+
+    // Check if sorteo has ended
+    if (cfg.fecha_fin && new Date(cfg.fecha_fin) < new Date()) {
+      document.getElementById('sorteo-cerrado').hidden = false;
+      return;
+    }
+
+    document.getElementById('sorteo-titulo-text').textContent = cfg.titulo.toUpperCase();
+
+    if (cfg.imagen) {
+      const imgEl = document.getElementById('sorteo-imagen');
+      imgEl.src = `/api/files/sorteo_config/${cfg.id}/${cfg.imagen}`;
+      imgEl.alt = cfg.titulo;
+      document.getElementById('sorteo-imagen-wrap').hidden = false;
+    }
+
+    if (cfg.fecha_fin) {
+      const fecha = new Date(cfg.fecha_fin).toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+      document.getElementById('sorteo-fecha-fin-text').textContent = fecha;
+      document.getElementById('sorteo-fecha-fin').hidden = false;
+    }
+
+    document.getElementById('sorteo-activo').hidden = false;
+  }
+
+  document.getElementById('registro-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email        = document.getElementById('reg-email').value.trim().toLowerCase();
+    const emailConfirm = document.getElementById('reg-email-confirm').value.trim().toLowerCase();
+    const instagram    = document.getElementById('reg-instagram').value.trim().replace(/^@/, '');
+    const errEl        = document.getElementById('reg-error');
+    const btn          = document.getElementById('reg-btn');
+    errEl.hidden       = true;
+
+    if (!email || !emailConfirm || !instagram) {
+      errEl.textContent = 'Rellena todos los campos.';
+      errEl.hidden = false;
+      return;
+    }
+
+    if (email !== emailConfirm) {
+      errEl.textContent = 'Los correos no coinciden.';
+      errEl.hidden = false;
+      triggerShake(document.getElementById('reg-email-confirm').parentElement);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9][\w.]{0,28}[a-zA-Z0-9]$|^[a-zA-Z0-9]{1}$/.test(instagram)) {
+      errEl.textContent = 'Instagram no válido. Solo letras, números, puntos y guiones bajos.';
+      errEl.hidden = false;
+      triggerShake(document.getElementById('reg-instagram').parentElement);
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = '...';
+
+    try {
+      const res = await fetch('/api/collections/participantes/records', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, instagram })
+      });
+
+      if (res.ok) {
+        transitionTo('sorteo-screen', () => {
+          document.getElementById('confirm-screen').hidden = false;
+        });
+        return;
+      }
+
+      const data = await res.json();
+      if (res.status === 429) {
+        errEl.textContent = 'Demasiados intentos. Espera un rato.';
+      } else if (data?.data?.email?.code === 'validation_not_unique') {
+        errEl.textContent = 'Ese correo ya está apuntado.';
+      } else {
+        errEl.textContent = 'Algo ha petado. Inténtalo.';
+      }
+      errEl.hidden = false;
+    } catch {
+      errEl.textContent = 'Algo ha petado. Inténtalo.';
+      errEl.hidden = false;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Quiero participar';
+    }
+  });
+
+  /* ── Helpers ──────────────────────────────────────── */
+  function transitionTo(fromId, afterFn) {
+    const overlay = document.getElementById('salchicha-transition');
+    overlay.innerHTML = '';
+
+    const VW    = window.innerWidth;
+    const VH    = window.innerHeight;
+    const COUNT = 20;
+    const SIZE  = Math.max(VW * 0.75, 300);
+
+    for (let i = 0; i < COUNT; i++) {
+      const img  = document.createElement('img');
+      img.src    = '/salchicha.png?v=2';
+      const size = SIZE * (0.7 + Math.random() * 0.8);
+      const x    = -size * 0.3 + Math.random() * (VW + size * 0.6);
+      const rot  = -35 + Math.random() * 70;
+      const delay = Math.random() * 400;
+      const dur   = 900 + Math.random() * 500;
+
+      img.style.cssText = `width:${size}px;height:auto;left:${x}px;top:-${size}px;`;
+
+      img.animate(
+        [{ transform: `translateY(0) rotate(${rot}deg)` },
+         { transform: `translateY(${VH + size}px) rotate(${rot}deg)` }],
+        { duration: dur, delay, easing: 'cubic-bezier(0.3,0,0.7,1)', fill: 'forwards' }
+      );
+
+      overlay.appendChild(img);
+    }
+
+    // Swap content when screen is mostly covered
+    setTimeout(() => {
+      document.getElementById(fromId).hidden = true;
+      afterFn();
+    }, 700);
+
+    // Clear overlay after all images have fallen
+    setTimeout(() => { overlay.innerHTML = ''; }, 1600);
+  }
+
+  function triggerShake(el) {
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 500);
+  }
+
+  /* ── Background stripes ───────────────────────────── */
+  (function () {
+    const canvas  = document.getElementById('bg-canvas');
+    const ctx     = canvas.getContext('2d');
+    const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+    const PERIOD       = 160;  // px between stripe repeats
+    const RED_W        = 80;   // red stripe width (half period)
+    const WHITE_W      = 80;   // white stripe width (half period)
+    const RED_ALPHA    = 1;
+    const WHITE_ALPHA  = 1;
+    const SPEED        = 0.2; // px per frame
+    const LERP_FACTOR  = 0.035;
+
+    // Movement direction angle (radians). -π/2 = upward.
+    let angle       = -Math.PI / 2;
+    let targetAngle = -Math.PI / 2;
+    let offset      = 0;
+
+    if (!isMobile) {
+      document.addEventListener('mousemove', (e) => {
+        const cx = e.clientX - window.innerWidth  / 2;
+        const cy = e.clientY - window.innerHeight / 2;
+        targetAngle = Math.atan2(cy, cx);
+      });
+    }
+
+    function lerpAngle(a, b, t) {
+      let d = b - a;
+      while (d >  Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      return a + d * t;
+    }
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function draw() {
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      if (!isMobile) angle = lerpAngle(angle, targetAngle, LERP_FACTOR);
+
+      // Rotate so local Y points in movement direction (angle).
+      // Stripes are horizontal in local space → perpendicular to movement.
+      const halfDiag = Math.sqrt(W * W + H * H) / 2 + PERIOD;
+
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.rotate(angle - Math.PI / 2);
+
+      let y = ((offset % PERIOD) - halfDiag - PERIOD);
+      while (y < halfDiag + PERIOD) {
+        ctx.fillStyle = `rgba(221,12,25,${RED_ALPHA})`;
+        ctx.fillRect(-halfDiag, y, halfDiag * 2, RED_W);
+
+        ctx.fillStyle = `rgba(255,255,255,${WHITE_ALPHA})`;
+        ctx.fillRect(-halfDiag, y + RED_W, halfDiag * 2, WHITE_W);
+
+        y += PERIOD;
+      }
+
+      ctx.restore();
+
+      offset += SPEED;
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    draw();
+  })();
+</script>
+</body>
+</html>
