@@ -6,8 +6,16 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      target:
+        description: "¿A qué VPS desplegar?"
+        type: choice
+        options: [ vps1, vps2 ]
+        default: vps1
 
 jobs:
   deploy:
     uses: hibrusi-dev/.github/.github/workflows/deploy-reusable.yml@main
+    with:
+      target: ${{ inputs.target }}
     secrets: inherit
