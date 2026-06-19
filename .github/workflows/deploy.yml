@@ -1,0 +1,13 @@
+# Añadido por el bootstrap CI/CD de hibrusi-dev.
+# La lógica vive en hibrusi-dev/.github (reusable workflow central).
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: hibrusi-dev/.github/.github/workflows/deploy-reusable.yml@main
+    secrets: inherit
